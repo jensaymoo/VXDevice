@@ -16,7 +16,7 @@ Environment:
 --*/
 
 #include "Driver.h"
-#include "Driver.tmh"
+//#include "Driver.tmh"
 
 using namespace std;
 using namespace Microsoft::IndirectDisp;
@@ -24,18 +24,18 @@ using namespace Microsoft::WRL;
 
 extern "C" DRIVER_INITIALIZE DriverEntry;
 
-EVT_WDF_DRIVER_DEVICE_ADD IddSampleDeviceAdd;
-EVT_WDF_DEVICE_D0_ENTRY IddSampleDeviceD0Entry;
+EVT_WDF_DRIVER_DEVICE_ADD DeviceAdd;
+EVT_WDF_DEVICE_D0_ENTRY DeviceD0Entry;
 
-EVT_IDD_CX_ADAPTER_INIT_FINISHED IddSampleAdapterInitFinished;
-EVT_IDD_CX_ADAPTER_COMMIT_MODES IddSampleAdapterCommitModes;
+EVT_IDD_CX_ADAPTER_INIT_FINISHED AdapterInitFinished;
+EVT_IDD_CX_ADAPTER_COMMIT_MODES AdapterCommitModes;
 
-EVT_IDD_CX_PARSE_MONITOR_DESCRIPTION IddSampleParseMonitorDescription;
-EVT_IDD_CX_MONITOR_GET_DEFAULT_DESCRIPTION_MODES IddSampleMonitorGetDefaultModes;
-EVT_IDD_CX_MONITOR_QUERY_TARGET_MODES IddSampleMonitorQueryModes;
+EVT_IDD_CX_PARSE_MONITOR_DESCRIPTION ParseMonitorDescription;
+EVT_IDD_CX_MONITOR_GET_DEFAULT_DESCRIPTION_MODES MonitorGetDefaultModes;
+EVT_IDD_CX_MONITOR_QUERY_TARGET_MODES MonitorQueryModes;
 
-EVT_IDD_CX_MONITOR_ASSIGN_SWAPCHAIN IddSampleMonitorAssignSwapChain;
-EVT_IDD_CX_MONITOR_UNASSIGN_SWAPCHAIN IddSampleMonitorUnassignSwapChain;
+EVT_IDD_CX_MONITOR_ASSIGN_SWAPCHAIN MonitorAssignSwapChain;
+EVT_IDD_CX_MONITOR_UNASSIGN_SWAPCHAIN MonitorUnassignSwapChain;
 
 struct IndirectDeviceContextWrapper
 {
@@ -76,7 +76,7 @@ extern "C" NTSTATUS DriverEntry(
     WDF_OBJECT_ATTRIBUTES_INIT(&Attributes);
 
     WDF_DRIVER_CONFIG_INIT(&Config,
-        IddSampleDeviceAdd
+        DeviceAdd
     );
 
     Status = WdfDriverCreate(pDriverObject, pRegistryPath, &Attributes, &Config, WDF_NO_HANDLE);
@@ -89,7 +89,7 @@ extern "C" NTSTATUS DriverEntry(
 }
 
 _Use_decl_annotations_
-NTSTATUS IddSampleDeviceAdd(WDFDRIVER Driver, PWDFDEVICE_INIT pDeviceInit)
+NTSTATUS DeviceAdd(WDFDRIVER Driver, PWDFDEVICE_INIT pDeviceInit)
 {
     NTSTATUS Status = STATUS_SUCCESS;
     WDF_PNPPOWER_EVENT_CALLBACKS PnpPowerCallbacks;
@@ -98,7 +98,7 @@ NTSTATUS IddSampleDeviceAdd(WDFDRIVER Driver, PWDFDEVICE_INIT pDeviceInit)
 
     // Register for power callbacks - in this sample only power-on is needed
     WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&PnpPowerCallbacks);
-    PnpPowerCallbacks.EvtDeviceD0Entry = IddSampleDeviceD0Entry;
+    PnpPowerCallbacks.EvtDeviceD0Entry = DeviceD0Entry;
     WdfDeviceInitSetPnpPowerEventCallbacks(pDeviceInit, &PnpPowerCallbacks);
 
     IDD_CX_CLIENT_CONFIG IddConfig;
@@ -108,14 +108,14 @@ NTSTATUS IddSampleDeviceAdd(WDFDRIVER Driver, PWDFDEVICE_INIT pDeviceInit)
     // redirects IoDeviceControl requests to an internal queue. This sample does not need this.
     // IddConfig.EvtIddCxDeviceIoControl = IddSampleIoDeviceControl;
 
-    IddConfig.EvtIddCxAdapterInitFinished = IddSampleAdapterInitFinished;
+    IddConfig.EvtIddCxAdapterInitFinished = AdapterInitFinished;
 
-    IddConfig.EvtIddCxParseMonitorDescription = IddSampleParseMonitorDescription;
-    IddConfig.EvtIddCxMonitorGetDefaultDescriptionModes = IddSampleMonitorGetDefaultModes;
-    IddConfig.EvtIddCxMonitorQueryTargetModes = IddSampleMonitorQueryModes;
-    IddConfig.EvtIddCxAdapterCommitModes = IddSampleAdapterCommitModes;
-    IddConfig.EvtIddCxMonitorAssignSwapChain = IddSampleMonitorAssignSwapChain;
-    IddConfig.EvtIddCxMonitorUnassignSwapChain = IddSampleMonitorUnassignSwapChain;
+    IddConfig.EvtIddCxParseMonitorDescription = ParseMonitorDescription;
+    IddConfig.EvtIddCxMonitorGetDefaultDescriptionModes = MonitorGetDefaultModes;
+    IddConfig.EvtIddCxMonitorQueryTargetModes = MonitorQueryModes;
+    IddConfig.EvtIddCxAdapterCommitModes = AdapterCommitModes;
+    IddConfig.EvtIddCxMonitorAssignSwapChain = MonitorAssignSwapChain;
+    IddConfig.EvtIddCxMonitorUnassignSwapChain = MonitorUnassignSwapChain;
 
     Status = IddCxDeviceInitConfig(pDeviceInit, &IddConfig);
     if (!NT_SUCCESS(Status))
@@ -152,7 +152,7 @@ NTSTATUS IddSampleDeviceAdd(WDFDRIVER Driver, PWDFDEVICE_INIT pDeviceInit)
 }
 
 _Use_decl_annotations_
-NTSTATUS IddSampleDeviceD0Entry(WDFDEVICE Device, WDF_POWER_DEVICE_STATE PreviousState)
+NTSTATUS DeviceD0Entry(WDFDEVICE Device, WDF_POWER_DEVICE_STATE PreviousState)
 {
     UNREFERENCED_PARAMETER(PreviousState);
 
@@ -591,7 +591,7 @@ void IndirectDeviceContext::UnassignSwapChain()
 #pragma region DDI Callbacks
 
 _Use_decl_annotations_
-NTSTATUS IddSampleAdapterInitFinished(IDDCX_ADAPTER AdapterObject, const IDARG_IN_ADAPTER_INIT_FINISHED* pInArgs)
+NTSTATUS AdapterInitFinished(IDDCX_ADAPTER AdapterObject, const IDARG_IN_ADAPTER_INIT_FINISHED* pInArgs)
 {
     // This is called when the OS has finished setting up the adapter for use by the IddCx driver. It's now possible
     // to report attached monitors.
@@ -606,7 +606,7 @@ NTSTATUS IddSampleAdapterInitFinished(IDDCX_ADAPTER AdapterObject, const IDARG_I
 }
 
 _Use_decl_annotations_
-NTSTATUS IddSampleAdapterCommitModes(IDDCX_ADAPTER AdapterObject, const IDARG_IN_COMMITMODES* pInArgs)
+NTSTATUS AdapterCommitModes(IDDCX_ADAPTER AdapterObject, const IDARG_IN_COMMITMODES* pInArgs)
 {
     UNREFERENCED_PARAMETER(AdapterObject);
     UNREFERENCED_PARAMETER(pInArgs);
@@ -623,7 +623,7 @@ NTSTATUS IddSampleAdapterCommitModes(IDDCX_ADAPTER AdapterObject, const IDARG_IN
 }
 
 _Use_decl_annotations_
-NTSTATUS IddSampleParseMonitorDescription(const IDARG_IN_PARSEMONITORDESCRIPTION* pInArgs, IDARG_OUT_PARSEMONITORDESCRIPTION* pOutArgs)
+NTSTATUS ParseMonitorDescription(const IDARG_IN_PARSEMONITORDESCRIPTION* pInArgs, IDARG_OUT_PARSEMONITORDESCRIPTION* pOutArgs)
 {
     // ==============================
     // TODO: In a real driver, this function would be called to generate monitor modes for an EDID by parsing it. In
@@ -655,7 +655,7 @@ NTSTATUS IddSampleParseMonitorDescription(const IDARG_IN_PARSEMONITORDESCRIPTION
 }
 
 _Use_decl_annotations_
-NTSTATUS IddSampleMonitorGetDefaultModes(IDDCX_MONITOR MonitorObject, const IDARG_IN_GETDEFAULTDESCRIPTIONMODES* pInArgs, IDARG_OUT_GETDEFAULTDESCRIPTIONMODES* pOutArgs)
+NTSTATUS MonitorGetDefaultModes(IDDCX_MONITOR MonitorObject, const IDARG_IN_GETDEFAULTDESCRIPTIONMODES* pInArgs, IDARG_OUT_GETDEFAULTDESCRIPTIONMODES* pOutArgs)
 {
     UNREFERENCED_PARAMETER(MonitorObject);
     UNREFERENCED_PARAMETER(pInArgs);
@@ -696,7 +696,7 @@ void CreateTargetMode(IDDCX_TARGET_MODE& Mode, UINT Width, UINT Height, UINT VSy
 }
 
 _Use_decl_annotations_
-NTSTATUS IddSampleMonitorQueryModes(IDDCX_MONITOR MonitorObject, const IDARG_IN_QUERYTARGETMODES* pInArgs, IDARG_OUT_QUERYTARGETMODES* pOutArgs)
+NTSTATUS MonitorQueryModes(IDDCX_MONITOR MonitorObject, const IDARG_IN_QUERYTARGETMODES* pInArgs, IDARG_OUT_QUERYTARGETMODES* pOutArgs)
 {
     UNREFERENCED_PARAMETER(MonitorObject);
 
@@ -754,7 +754,7 @@ NTSTATUS IddSampleMonitorQueryModes(IDDCX_MONITOR MonitorObject, const IDARG_IN_
 }
 
 _Use_decl_annotations_
-NTSTATUS IddSampleMonitorAssignSwapChain(IDDCX_MONITOR MonitorObject, const IDARG_IN_SETSWAPCHAIN* pInArgs)
+NTSTATUS MonitorAssignSwapChain(IDDCX_MONITOR MonitorObject, const IDARG_IN_SETSWAPCHAIN* pInArgs)
 {
     auto* pContext = WdfObjectGet_IndirectDeviceContextWrapper(MonitorObject);
     pContext->pContext->AssignSwapChain(pInArgs->hSwapChain, pInArgs->RenderAdapterLuid, pInArgs->hNextSurfaceAvailable);
@@ -762,7 +762,7 @@ NTSTATUS IddSampleMonitorAssignSwapChain(IDDCX_MONITOR MonitorObject, const IDAR
 }
 
 _Use_decl_annotations_
-NTSTATUS IddSampleMonitorUnassignSwapChain(IDDCX_MONITOR MonitorObject)
+NTSTATUS MonitorUnassignSwapChain(IDDCX_MONITOR MonitorObject)
 {
     auto* pContext = WdfObjectGet_IndirectDeviceContextWrapper(MonitorObject);
     pContext->pContext->UnassignSwapChain();
